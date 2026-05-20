@@ -16,8 +16,6 @@ app = FastAPI(title="Growlouder  Onboarding System", version="1.0.0")
 
 # Database Path
 DB_PATH = os.path.join(os.path.dirname(__file__), "submissions.db")
-if os.environ.get("VERCEL") == "1":
-    DB_PATH = "/tmp/submissions.db"
 
 # Simple admin credentials
 ADMIN_USERNAME = "admin"
@@ -223,9 +221,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-@app.on_event("startup")
-def startup_event():
-    init_db()
+init_db()
 
 # ================================================================
 # Pydantic Models

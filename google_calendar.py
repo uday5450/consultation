@@ -13,18 +13,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CREDENTIALS_PATH = os.path.join(BASE_DIR, 'credentials.json')
 TOKEN_PATH = os.path.join(BASE_DIR, 'token.json')
 
-if os.environ.get("VERCEL") == "1":
-    CREDENTIALS_PATH = os.path.join('/tmp', 'credentials.json')
-    TOKEN_PATH = os.path.join('/tmp', 'token.json')
-    
-    # Copy pre-packaged credentials to /tmp so they can be read/updated dynamically on Vercel
-    repo_creds = os.path.join(BASE_DIR, 'credentials.json')
-    if os.path.exists(repo_creds) and not os.path.exists(CREDENTIALS_PATH):
-        try:
-            import shutil
-            shutil.copy(repo_creds, CREDENTIALS_PATH)
-        except Exception as e:
-            print("Failed to copy repository credentials to /tmp:", e)
+
 
 from google_auth_oauthlib.flow import Flow
 
