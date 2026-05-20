@@ -47,6 +47,7 @@ async function init() {
     adminCurrentMonth = now.getMonth();
     await checkGoogleStatus();
     await loadConfig();
+    await loadGoogleCredentials();
     await loadAvailability();
     await loadBlockedDates();
     await loadAllBookings();
@@ -597,7 +598,7 @@ function renderAllBookingsTable(bookings) {
     tbody.innerHTML = '';
 
     if (bookings.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text-muted);">No bookings match the filters.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:3rem;color:var(--text-muted);">No bookings match the filters.</td></tr>`;
         return;
     }
 
@@ -605,6 +606,29 @@ function renderAllBookingsTable(bookings) {
         const tr = document.createElement('tr');
         const [y, m, d] = b.booked_date.split('-');
         const dateLabel = `${MONTHS_NAMES[+m-1]} ${+d}, ${+y}`;
+
+        // Format created_at date with Indian timezone (Asia/Kolkata)
+        let createdLabel = '—';
+        if (b.created_at) {
+            try {
+                let utcStr = b.created_at;
+                if (!utcStr.endsWith('Z') && !utcStr.includes('+')) {
+                    utcStr = utcStr.replace(' ', 'T') + 'Z';
+                }
+                const dateObj = new Date(utcStr);
+                
+                const optionsDate = { timeZone: 'Asia/Kolkata', year: 'numeric', month: 'short', day: 'numeric' };
+                const optionsTime = { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true };
+                
+                const dateStr = dateObj.toLocaleDateString('en-US', optionsDate);
+                const timeStrRaw = dateObj.toLocaleTimeString('en-US', optionsTime);
+                
+                createdLabel = `${dateStr}<br><span style="color:var(--text-muted);font-size:.82rem;">${timeStrRaw}</span>`;
+            } catch(e) {
+                console.error("Error converting timezone:", e);
+                createdLabel = b.created_at;
+            }
+        }
 
         const meetLinkHtml = b.meet_link ? `
             <a href="${escapeHtml(b.meet_link)}" target="_blank" class="btn" style="padding: 0.35rem 0.7rem; font-size: 0.75rem; border-radius: 6px; background: var(--accent-gradient); text-decoration: none; color: white; display: inline-flex; align-items: center; gap: 0.25rem; box-shadow: none; width: auto; font-family: inherit;">
@@ -618,6 +642,7 @@ function renderAllBookingsTable(bookings) {
             <td>${b.client_name}</td>
             <td>${b.client_email}</td>
             <td>${b.client_phone || '—'}</td>
+            <td style="color: var(--text-secondary); font-size: 0.85rem;">${createdLabel}</td>
             <td>${meetLinkHtml}</td>
             <td><span class="status-pill ${b.status}">${b.status}</span></td>
             <td>
@@ -839,6 +864,117 @@ function showToast(msg, isError = false) {
     el.className = 'toast' + (isError ? ' toast-error' : '');
     el.classList.add('show');
     setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ================================================================
+// Google Developer Credentials Config Management
+// ================================================================
+let newGoogleCredentialsPayload = null;
+
+async function loadGoogleCredentials() {
+    try {
+        const res = await fetch('/api/admin/google-credentials');
+        const data = await res.json();
+        const el = document.getElementById('active-client-id');
+        if (el) {
+            el.textContent = data.client_id || 'Not Configured';
+        }
+    } catch(e) {
+        console.error('Failed to load Google credentials', e);
+    }
+}
+
+function handleCredFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const payload = JSON.parse(e.target.result);
+            const appType = "installed" in payload ? "installed" : "web" in payload ? "web" : null;
+            if (!appType) {
+                showToast("Invalid credentials file format.", true);
+                return;
+            }
+            newGoogleCredentialsPayload = payload;
+            
+            // Mirror JSON into paste input textarea
+            document.getElementById('cred-paste-input').value = JSON.stringify(payload, null, 4);
+            
+            document.getElementById('upload-label').textContent = `Loaded: ${file.name}`;
+            document.getElementById('cred-dropzone').style.borderColor = '#00b894';
+            document.getElementById('save-creds-btn').style.display = 'block';
+        } catch(err) {
+            showToast("Failed to parse JSON file.", true);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function handleCredTextChange() {
+    const rawVal = document.getElementById('cred-paste-input').value.trim();
+    if (!rawVal) {
+        newGoogleCredentialsPayload = null;
+        document.getElementById('save-creds-btn').style.display = 'none';
+        document.getElementById('cred-dropzone').style.borderColor = 'var(--border-color)';
+        return;
+    }
+    try {
+        const payload = JSON.parse(rawVal);
+        const appType = "installed" in payload ? "installed" : "web" in payload ? "web" : null;
+        if (appType) {
+            newGoogleCredentialsPayload = payload;
+            document.getElementById('cred-dropzone').style.borderColor = '#00b894';
+            document.getElementById('save-creds-btn').style.display = 'block';
+        } else {
+            newGoogleCredentialsPayload = null;
+            document.getElementById('save-creds-btn').style.display = 'none';
+            document.getElementById('cred-dropzone').style.borderColor = 'var(--border-color)';
+        }
+    } catch(e) {
+        newGoogleCredentialsPayload = null;
+        document.getElementById('save-creds-btn').style.display = 'none';
+        document.getElementById('cred-dropzone').style.borderColor = 'var(--border-color)';
+    }
+}
+
+async function saveGoogleCredentials() {
+    if (!newGoogleCredentialsPayload) return;
+    const btn = document.getElementById('save-creds-btn');
+    btn.disabled = true;
+    btn.textContent = 'Updating...';
+    try {
+        const res = await fetch('/api/admin/google-credentials', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(newGoogleCredentialsPayload)
+        });
+        const result = await res.json();
+        if (res.ok) {
+            showToast(result.message || "Google API Credentials updated!");
+            newGoogleCredentialsPayload = null;
+            btn.style.display = 'none';
+            document.getElementById('upload-label').textContent = 'Click or drop credentials.json here';
+            document.getElementById('cred-dropzone').style.borderColor = 'var(--border-color)';
+            document.getElementById('cred-paste-input').value = '';
+            
+            // Reload status and credentials ID
+            await loadGoogleCredentials();
+            await checkGoogleStatus();
+            
+            // Redraw connected status in UI
+            document.getElementById('google-connected-email').style.display = 'none';
+            document.querySelector('#google-connect-btn span').textContent = 'Connect Google for Meet Links';
+        } else {
+            throw new Error(result.detail || "Failed to save credentials.");
+        }
+    } catch(e) {
+        showToast(e.message, true);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Update Credentials';
+    }
 }
 
 init();

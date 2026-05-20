@@ -1060,6 +1060,49 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
 
+@app.get("/api/admin/google-credentials")
+def get_google_credentials(authenticated: bool = Depends(verify_session)):
+    """Admin: Get currently active client_id from credentials.json."""
+    import json
+    if not os.path.exists(google_calendar.CREDENTIALS_PATH):
+        return {"client_id": "Not Configured"}
+    try:
+        with open(google_calendar.CREDENTIALS_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            app_type = "installed" if "installed" in data else "web" if "web" in data else None
+            if app_type:
+                return {"client_id": data[app_type].get("client_id", "Not Configured")}
+    except Exception as e:
+        print("Error reading credentials:", e)
+    return {"client_id": "Error Reading File"}
+
+@app.post("/api/admin/google-credentials")
+def post_google_credentials(payload: dict, authenticated: bool = Depends(verify_session)):
+    """Admin: Upload or paste a new credentials.json configuration."""
+    import json
+    app_type = "installed" if "installed" in payload else "web" if "web" in payload else None
+    if not app_type:
+        raise HTTPException(status_code=400, detail="Invalid credentials.json format. Must contain 'installed' or 'web' root key.")
+    
+    creds = payload[app_type]
+    if "client_id" not in creds or "client_secret" not in creds:
+        raise HTTPException(status_code=400, detail="Missing 'client_id' or 'client_secret' inside credentials payload.")
+    
+    try:
+        with open(google_calendar.CREDENTIALS_PATH, "w", encoding="utf-8") as f:
+            json.dump(payload, f, indent=4)
+        
+        # Clear any active tokens so they must re-authenticate with the new client ID
+        if os.path.exists(google_calendar.TOKEN_PATH):
+            try:
+                os.remove(google_calendar.TOKEN_PATH)
+            except Exception:
+                pass
+                
+        return {"status": "success", "message": "Google Developer credentials updated successfully!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to write credentials.json file: {str(e)}")
+
 @app.get("/api/google/status")
 def google_status():
     """Check if Google Calendar is connected and return the email."""
