@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book a Consultation | Growlouder </title>
+    <meta name="description" content="Schedule a free strategy call with Growlouder . Pick a date and time that works for you.">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/schedule.css">
+</head>
+<body>
+    <div class="app-container" style="padding: 2rem 1rem; align-items: stretch; max-width: 1100px; margin: 0 auto;">
+
+        <!-- Inactive Banner -->
+        <div id="inactive-banner" class="inactive-banner" style="display:none;">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+            Booking is currently unavailable. Please check back later.
+        </div>
+
+        <!-- Page Header -->
+        <div class="sched-page-header">
+            <a href="/" class="back-link">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+                Back to Form
+            </a>
+            <div class="sched-brand">Growlouder  <span class="gradient-text">Consultations</span></div>
+        </div>
+
+        <!-- Main Booking Layout -->
+        <div class="booking-layout" id="booking-layout">
+
+            <!-- Left Panel: Info -->
+            <aside class="booking-info-panel">
+                <div class="info-avatar">
+                    <svg width="36" height="36" fill="none" stroke="white" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </div>
+                <h1 class="info-name">Growlouder  Team</h1>
+                <h2 class="info-meeting-type">Strategy Consultation</h2>
+
+                <div class="info-detail-row">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span id="slot-duration-label">30 minutes</span>
+                </div>
+                <div class="info-detail-row">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                    <span>Google Meet / Zoom</span>
+                </div>
+                <div class="info-detail-row">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Free of charge</span>
+                </div>
+
+                <hr class="info-divider">
+                <p class="info-description">
+                    Get a personalized strategy session with our team. We'll discuss your brand goals, current challenges, and craft a roadmap tailored specifically for your business.
+                </p>
+            </aside>
+
+            <!-- Right Panel: Calendar + Slots + Form -->
+            <div class="booking-main" id="booking-main">
+
+                <!-- Step 1: Date & Slot Picker -->
+                <div class="booking-step active" id="step-date">
+                    <h3 class="step-heading">Select a Date & Time</h3>
+
+                    <div class="cal-and-slots-layout">
+                        <!-- Calendar (Left) -->
+                        <div class="cal-panel">
+                            <div class="cal-nav">
+                                <button class="cal-nav-btn" id="prev-month-btn" onclick="changeMonth(-1)">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+                                </button>
+                                <span class="cal-month-label" id="cal-month-label">May 2026</span>
+                                <button class="cal-nav-btn" id="next-month-btn" onclick="changeMonth(1)">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+                                </button>
+                            </div>
+
+                            <div class="cal-grid">
+                                <div class="cal-weekday">Sun</div>
+                                <div class="cal-weekday">Mon</div>
+                                <div class="cal-weekday">Tue</div>
+                                <div class="cal-weekday">Wed</div>
+                                <div class="cal-weekday">Thu</div>
+                                <div class="cal-weekday">Fri</div>
+                                <div class="cal-weekday">Sat</div>
+                                <!-- Days injected by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Time Slots Sidebar (Right) -->
+                        <div class="slots-sidebar" id="slots-section">
+                            <div class="slots-sidebar-placeholder" id="slots-placeholder">
+                                <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color:var(--text-muted);opacity:.5;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <p>Select a date to view<br>available time slots</p>
+                            </div>
+                            <div id="slots-content" style="display:none;">
+                                <h4 class="slots-heading">
+                                    <span id="slots-date-label"></span>
+                                    <span class="timezone-badge">IST</span>
+                                </h4>
+                                <div class="slots-scroll-area">
+                                    <div class="slots-grid" id="slots-grid">
+                                        <!-- Injected by JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Contact Details Form -->
+                <div class="booking-step" id="step-details">
+                    <button class="back-step-btn" onclick="goBackToDate()">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+                        Back
+                    </button>
+                    <h3 class="step-heading">Your Details</h3>
+                    <div class="selected-slot-badge" id="selected-slot-badge"></div>
+
+                    <form id="booking-form" novalidate>
+                        <div class="form-group">
+                            <label class="required" for="b-name">Full Name</label>
+                            <input type="text" id="b-name" class="input-control" placeholder="Your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="required" for="b-email">Email Address</label>
+                            <input type="email" id="b-email" class="input-control" placeholder="you@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="b-phone">Phone Number <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label>
+                            <input type="tel" id="b-phone" class="input-control" placeholder="+91 98765 43210">
+                        </div>
+                        <div class="form-group">
+                            <label for="b-notes">Additional Notes <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label>
+                            <textarea id="b-notes" class="input-control" placeholder="Anything you'd like us to know beforehand..." rows="3"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn" id="confirm-btn" style="margin-top:1rem;">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Confirm Booking
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Step 3: Success -->
+                <div class="booking-step" id="step-success">
+                    <div class="success-screen" style="display:block;">
+                        <div class="success-icon-wrapper">
+                            <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                        </div>
+                        <h2>You're <span class="gradient-text">booked!</span></h2>
+                        <p id="success-msg">A confirmation has been sent to your email. We look forward to speaking with you!</p>
+                        <div class="success-details-card" id="success-details-card"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-container">
+        <div class="toast" id="toast-el"></div>
+    </div>
+
+    <script src="/static/js/schedule.js"></script>
+</body>
+</html>

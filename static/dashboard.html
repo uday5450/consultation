@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Growlouder  Console | Onboarding Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Chart.js CDN for beautiful interactive charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Dashboard Header -->
+        <header class="dash-header">
+            <div>
+                <div class="dash-logo-text">Growlouder  <span class="gradient-text">Console</span></div>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.2rem;">Onboarding Pipeline & Administrative Insights Panel</p>
+            </div>
+            <div class="dash-actions">
+                <button type="button" class="btn btn-secondary" onclick="exportDataToCSV()" style="padding: 0.6rem 1.2rem; font-size: 0.9rem; border-radius: 8px;">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="margin-right: 0.3rem; vertical-align: middle; display: inline-block;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+                    </svg> Export CSV
+                </button>
+                <a href="/admin/schedule" class="btn btn-secondary" style="padding: 0.6rem 1.2rem; font-size: 0.9rem; border-radius: 8px; text-decoration: none; display: flex; align-items: center; gap: 0.4rem; color: var(--text-secondary);">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+                    Schedule
+                </a>
+                <button type="button" class="btn" id="logout-btn" style="padding: 0.6rem 1.2rem; font-size: 0.9rem; border-radius: 8px; background: var(--accent-gradient); box-shadow: none;">
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- KPI Metrics Grid -->
+        <section class="metrics-grid">
+            <!-- Total Leads -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <span class="metric-title">Total Pipelines</span>
+                    <div class="metric-icon metric-icon-purple">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A2.25 2.25 0 0112.75 21h-1.5a2.25 2.25 0 01-2.25-1.763v-.109m0 0a9.38 9.38 0 01-2.625.372 9.337 9.337 0 01-4.121-.952 4.125 4.125 0 007.533-2.493M3.75 19.5h.007v.008H3.75V19.5zm0-3.75h.007v.008H3.75v-.008zm16.5 0h.007v.008h-.007v-.008zM9.75 15.75h.007v.008H9.75v-.008zm5.25-.75h.007v.008h-.007v-.008zM2.25 9.75h.007v.008H2.25V9.75zm19.5 0h.007v.008h-.007V9.75zm-5.25-.75h.007v.008h-.007V9zm-5.25-.75h.007v.008H9.75V8.25zm-5.25-.75h.007v.008H4.5V7.5z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="metric-value" id="metric-total">0</div>
+                <span class="metric-desc">Total prospective client submissions</span>
+            </div>
+
+            <!-- Investment willingness -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <span class="metric-title">Premium Budgets</span>
+                    <div class="metric-icon metric-icon-cyan">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5h16.5M3.75 20.25zM3.75 20.25l1.5-13.5M3.75 20.25h16.5M5.25 6.75h13.5M19.5 6.75l-1.5 13.5m0-13.5h.008v.008h-.008V6.75zm-15 0h.008v.008H4.5V6.75z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="metric-value" id="metric-premium-budget">0%</div>
+                <span class="metric-desc">Willing to invest Above ₹99,999 / mo</span>
+            </div>
+
+            <!-- Top Lead Source -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <span class="metric-title">Top Lead Source</span>
+                    <div class="metric-icon metric-icon-orange">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="metric-value" id="metric-top-source">-</div>
+                <span class="metric-desc">Top acquisition channel for leads</span>
+            </div>
+        </section>
+
+        <!-- Visualization Graphs Panel -->
+        <section class="visuals-panel">
+            <!-- Industry Distribution Bar Chart -->
+            <div class="chart-card">
+                <div class="chart-card-title">Industry Domain Distribution</div>
+                <div class="chart-wrapper">
+                    <canvas id="industryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Lead Channel Acquisition Pie Chart -->
+            <div class="chart-card">
+                <div class="chart-card-title">Acquisition Source Split</div>
+                <div class="chart-wrapper">
+                    <canvas id="sourceChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pipeline Data Records Table -->
+        <section class="table-card">
+            <div class="table-header-row">
+                <h2 style="font-size: 1.4rem;">Prospect Details Database</h2>
+                <div style="display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap;">
+                    <div class="search-box">
+                        <svg class="search-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>
+                        </svg>
+                        <input type="text" id="search-input" class="input-control" placeholder="Search by name, company, or city...">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dynamic Dashboard Filters -->
+            <div class="filter-controls-row" style="display: flex; gap: 1rem; margin-bottom: 1.2rem; padding: 0.2rem 0; flex-wrap: wrap; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; display: block; margin-bottom: 0.3rem;">Filter by Industry</label>
+                    <div class="select-wrapper">
+                        <select id="filter-industry" class="input-control" style="padding: 0.5rem 1rem; font-size: 0.85rem; height: auto;">
+                            <option value="">All Industries</option>
+                            <option value="Healthcare / Clinic">Healthcare / Clinic</option>
+                            <option value="Real Estate">Real Estate</option>
+                            <option value="Coach / Consultant">Coach / Consultant</option>
+                            <option value="Tech & IT">Tech & IT</option>
+                            <option value="Entrepreneur">Entrepreneur</option>
+                            <option value="Podcaster">Podcaster</option>
+                            <option value="Astrologist / Numerologist / Vastu Shastra">Astrologist / Numerologist / Vastu Shastra</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; display: block; margin-bottom: 0.3rem;">Filter by Budget</label>
+                    <div class="select-wrapper">
+                        <select id="filter-budget" class="input-control" style="padding: 0.5rem 1rem; font-size: 0.85rem; height: auto;">
+                            <option value="">All Budgets</option>
+                            <option value="Below ₹ 44,999">Below ₹ 44,999</option>
+                            <option value="₹ 44,999 - ₹ 64,999">₹ 44,999 - ₹ 64,999</option>
+                            <option value="₹ 64,999 - ₹ 84,999">₹ 64,999 - ₹ 84,999</option>
+                            <option value="Above ₹ 99,999">Above ₹ 99,999</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; display: block; margin-bottom: 0.3rem;">Filter by Business Age</label>
+                    <div class="select-wrapper">
+                        <select id="filter-age" class="input-control" style="padding: 0.5rem 1rem; font-size: 0.85rem; height: auto;">
+                            <option value="">All Business Ages</option>
+                            <option value="Just started">Just started</option>
+                            <option value="0 - 1 Year">0 - 1 Year</option>
+                            <option value="1 - 3 Year">1 - 3 Year</option>
+                            <option value="3 - 10 Year">3 - 10 Year</option>
+                            <option value="10+ Year">10+ Year</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; display: block; margin-bottom: 0.3rem;">Meeting Status</label>
+                    <div class="select-wrapper">
+                        <select id="filter-meeting" class="input-control" style="padding: 0.5rem 1rem; font-size: 0.85rem; height: auto;">
+                            <option value="">All Meetings</option>
+                            <option value="has-meeting">Meeting Scheduled</option>
+                            <option value="no-meeting">No Meeting Scheduled</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="leads-table" id="leads-table">
+                    <thead>
+                        <tr>
+                            <th>Prospect Details</th>
+                            <th>Firm Name</th>
+                            <th>Industry</th>
+                            <th>Monthly Investment</th>
+                            <th>Submitted On</th>
+                            <th>Meeting / Join</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leads-table-body">
+                        <!-- Rows injected via Javascript -->
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 3rem;">
+                                <div class="spinner" style="margin: 0 auto 1rem;"></div>
+                                <span style="color: var(--text-secondary);">Loading pipelines database...</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="empty-state-el" class="empty-state" style="display: none;">
+                <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"></path>
+                </svg>
+                <h3>No records matching your filters.</h3>
+                <p style="margin-top: 0.5rem;">Try modifying your search query or refreshing the dashboard.</p>
+            </div>
+        </section>
+
+        <!-- Brand Footer Credit -->
+        <div class="brand-footer" style="margin-top: 1rem; margin-bottom: 2.5rem;">
+            <div class="powered-by">Powered by <a href="#" target="_blank">Uday Sorathiya</a></div>
+            <div>For support & inquiries, reach out to <a href="mailto:uday.devworks@gmail.com">uday.devworks@gmail.com</a></div>
+        </div>
+    </div>
+
+    <!-- Sliding detail drawer for individual response viewer -->
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+    <div class="drawer" id="drawer">
+        <button type="button" class="drawer-close" id="drawer-close-btn">&times;</button>
+        <h2 class="drawer-title">Prospect Details</h2>
+        <div id="drawer-content">
+            <!-- Details rendered via JavaScript -->
+        </div>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
