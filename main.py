@@ -223,7 +223,9 @@ def init_db():
     conn.commit()
     conn.close()
 
-init_db()
+@app.on_event("startup")
+def startup_event():
+    init_db()
 
 # ================================================================
 # Pydantic Models
