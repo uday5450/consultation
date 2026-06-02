@@ -113,11 +113,17 @@ def init_db():
         cursor.execute("ALTER TABLE schedule_config ADD COLUMN break_end TEXT DEFAULT '14:00'")
     if "break_enabled" not in cols:
         cursor.execute("ALTER TABLE schedule_config ADD COLUMN break_enabled INTEGER DEFAULT 0")
+    if "original_price" not in cols:
+        cursor.execute("ALTER TABLE schedule_config ADD COLUMN original_price INTEGER DEFAULT 499")
+    if "current_price" not in cols:
+        cursor.execute("ALTER TABLE schedule_config ADD COLUMN current_price INTEGER DEFAULT 0")
+    if "currency" not in cols:
+        cursor.execute("ALTER TABLE schedule_config ADD COLUMN currency TEXT DEFAULT '₹'")
 
     # Insert default config if not present
     cursor.execute("SELECT COUNT(*) FROM schedule_config")
     if cursor.fetchone()[0] == 0:
-        cursor.execute("INSERT INTO schedule_config (id, form_active, slot_duration, break_start, break_end, break_enabled) VALUES (1, 1, 30, '13:00', '14:00', 0)")
+        cursor.execute("INSERT INTO schedule_config (id, form_active, slot_duration, break_start, break_end, break_enabled, original_price, current_price, currency) VALUES (1, 1, 30, '13:00', '14:00', 0, 499, 0, '₹')")
 
     # Initialize default availability (Mon–Fri, 9am–6pm)
     cursor.execute("SELECT COUNT(*) FROM availability_settings")
@@ -164,6 +170,19 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+
+    # Slot temporary holds table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS slot_holds (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            hold_date TEXT NOT NULL,
+            hold_time TEXT NOT NULL,
+            session_id TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_slot_holds_date ON slot_holds (hold_date)")
 
     # Date breaks table (admin can block specific time slots on specific dates)
     cursor.execute("""
@@ -265,12 +284,20 @@ class ScheduleConfigUpdate(BaseModel):
     break_start: Optional[str] = "13:00"
     break_end: Optional[str] = "14:00"
     break_enabled: Optional[bool] = False
+    original_price: Optional[int] = 499
+    current_price: Optional[int] = 0
+    currency: Optional[str] = "₹"
 
 class DateBreakCreate(BaseModel):
     break_date: str
     start_time: str
     end_time: str
     reason: Optional[str] = None
+
+class SlotHoldRequest(BaseModel):
+    booked_date: str
+    booked_time: str
+    session_id: str
 
 class BookingCreate(BaseModel):
     booked_date: str
@@ -586,7 +613,9 @@ def update_schedule_config(config: ScheduleConfigUpdate, authenticated: bool = D
         cursor.execute("""
             UPDATE schedule_config
             SET form_active=?, slot_duration=?, custom_slot_minutes=?,
-                break_start=?, break_end=?, break_enabled=?, updated_at=CURRENT_TIMESTAMP
+                break_start=?, break_end=?, break_enabled=?,
+                original_price=?, current_price=?, currency=?,
+                updated_at=CURRENT_TIMESTAMP
             WHERE id=1
         """, (
             1 if config.form_active else 0,
@@ -594,7 +623,10 @@ def update_schedule_config(config: ScheduleConfigUpdate, authenticated: bool = D
             config.custom_slot_minutes,
             config.break_start or "13:00",
             config.break_end or "14:00",
-            1 if config.break_enabled else 0
+            1 if config.break_enabled else 0,
+            config.original_price if config.original_price is not None else 499,
+            config.current_price if config.current_price is not None else 0,
+            config.currency or "₹"
         ))
         conn.commit()
         conn.close()
@@ -635,10 +667,10 @@ def update_availability(update: AvailabilityUpdate, authenticated: bool = Depend
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/schedule/slots/{date_str}")
-def get_slots_for_date(date_str: str):
+def get_slots_for_date(date_str: str, session_id: Optional[str] = None):
     """
     Public: Return available time slots for a given date (YYYY-MM-DD).
-    Slots already booked or falling in breaks/blocks are marked unavailable.
+    Slots already booked, held by others, or falling in breaks/blocks are marked unavailable.
     """
     try:
         target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -650,6 +682,10 @@ def get_slots_for_date(date_str: str):
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
+        # Clean expired holds
+        cursor.execute("DELETE FROM slot_holds WHERE expires_at < datetime('now')")
+        conn.commit()
+
         # Get config
         cursor.execute("SELECT * FROM schedule_config WHERE id = 1")
         config = dict(cursor.fetchone())
@@ -659,7 +695,7 @@ def get_slots_for_date(date_str: str):
 
         slot_minutes = config["custom_slot_minutes"] if config["slot_duration"] == 0 and config["custom_slot_minutes"] else config["slot_duration"]
 
-        # Python weekday: Mon=0 ... Sun=6; our DB uses Mon=1 ... Sun=7 — using Python 0-indexed
+        # Python weekday: Mon=0 ... Sun=6
         day_of_week = target_date.weekday()  # 0=Mon, 6=Sun
 
         cursor.execute("SELECT * FROM availability_settings WHERE day_of_week = ? AND is_active = 1", (day_of_week,))
@@ -680,6 +716,13 @@ def get_slots_for_date(date_str: str):
         cursor.execute("SELECT booked_time FROM bookings WHERE booked_date = ? AND status != 'cancelled'", (date_str,))
         booked_times = {row["booked_time"] for row in cursor.fetchall()}
 
+        # Get active holds by others
+        cursor.execute(
+            "SELECT hold_time FROM slot_holds WHERE hold_date = ? AND session_id != ? AND expires_at > datetime('now')",
+            (date_str, session_id or "")
+        )
+        held_times = {row["hold_time"] for row in cursor.fetchall()}
+
         # Load date-specific custom breaks
         cursor.execute("SELECT start_time, end_time, reason FROM date_breaks WHERE break_date = ?", (date_str,))
         db_breaks = [dict(r) for r in cursor.fetchall()]
@@ -696,6 +739,7 @@ def get_slots_for_date(date_str: str):
         while current + timedelta(minutes=slot_minutes) <= end_dt:
             time_str = current.strftime("%H:%M")
             is_booked = time_str in booked_times
+            is_held = time_str in held_times
             is_past = current <= now and target_date == date.today()
 
             # Check overlap with breaks
@@ -737,14 +781,83 @@ def get_slots_for_date(date_str: str):
             slots.append({
                 "time": time_str,
                 "display": current.strftime("%I:%M %p"),
-                "available": not is_booked and not is_past and not is_in_break,
+                "available": not is_booked and not is_held and not is_past and not is_in_break,
                 "booked": is_booked,
+                "is_held": is_held,
                 "is_break": is_in_break,
                 "break_reason": break_reason
             })
             current += timedelta(minutes=slot_minutes)
 
         return {"slots": slots, "form_active": True, "date": date_str}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/schedule/hold")
+def hold_slot(req: SlotHoldRequest):
+    """
+    Public: Place a temporary 10-minute hold on a slot.
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        # Clean expired holds first
+        cursor.execute("DELETE FROM slot_holds WHERE expires_at < datetime('now')")
+        
+        # Check if already booked
+        cursor.execute(
+            "SELECT id FROM bookings WHERE booked_date = ? AND booked_time = ? AND status != 'cancelled'",
+            (req.booked_date, req.booked_time)
+        )
+        if cursor.fetchone():
+            conn.close()
+            raise HTTPException(status_code=409, detail="This slot is already booked.")
+            
+        # Check if held by another active session
+        cursor.execute(
+            "SELECT session_id FROM slot_holds WHERE hold_date = ? AND hold_time = ? AND session_id != ? AND expires_at > datetime('now')",
+            (req.booked_date, req.booked_time, req.session_id)
+        )
+        existing_hold = cursor.fetchone()
+        if existing_hold:
+            conn.close()
+            raise HTTPException(status_code=409, detail="This slot is currently being selected by another user.")
+            
+        # Set expire time (10 minutes in UTC)
+        expires_dt = datetime.utcnow() + timedelta(minutes=10)
+        expires_str = expires_dt.strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Insert or update our hold (one active hold per session_id)
+        cursor.execute("DELETE FROM slot_holds WHERE session_id = ?", (req.session_id,))
+        cursor.execute("""
+            INSERT INTO slot_holds (hold_date, hold_time, session_id, expires_at)
+            VALUES (?, ?, ?, ?)
+        """, (req.booked_date, req.booked_time, req.session_id, expires_str))
+        
+        conn.commit()
+        conn.close()
+        return {"status": "success", "message": "Slot held for 10 minutes", "expires_at": expires_str}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/schedule/release-hold")
+def release_slot_hold(req: SlotHoldRequest):
+    """
+    Public: Release hold on a slot (e.g. if user deselects it or leaves).
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute(
+            "DELETE FROM slot_holds WHERE hold_date = ? AND hold_time = ? AND session_id = ?",
+            (req.booked_date, req.booked_time, req.session_id)
+        )
+        conn.commit()
+        conn.close()
+        return {"status": "success", "message": "Slot hold released"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

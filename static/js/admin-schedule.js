@@ -58,6 +58,8 @@ async function init() {
 // ================================================================
 // Config (Form Active + Slot Duration)
 // ================================================================
+// Config (Form Active + Slot Duration)
+// ================================================================
 async function loadConfig() {
     try {
         adminConfig = await fetch('/api/schedule/config').then(r => r.json());
@@ -82,6 +84,12 @@ async function loadConfig() {
         document.getElementById('break-active-toggle').checked = !!adminConfig.break_enabled;
         document.getElementById('break-start-input').value = adminConfig.break_start || '13:00';
         document.getElementById('break-end-input').value = adminConfig.break_end || '14:00';
+
+        // Pricing UI load
+        document.getElementById('currency-select').value = adminConfig.currency || '₹';
+        document.getElementById('original-price-input').value = adminConfig.original_price !== undefined ? adminConfig.original_price : 499;
+        document.getElementById('current-price-input').value = adminConfig.current_price !== undefined ? adminConfig.current_price : 0;
+        updatePricingPreview();
     } catch(e) { console.error('Config load failed', e); }
 }
 
@@ -112,6 +120,11 @@ async function updateConfig() {
     const breakStart = document.getElementById('break-start-input').value;
     const breakEnd = document.getElementById('break-end-input').value;
 
+    // Pricing settings
+    const currency = document.getElementById('currency-select').value;
+    const originalPrice = parseInt(document.getElementById('original-price-input').value) || 0;
+    const currentPrice = parseInt(document.getElementById('current-price-input').value) || 0;
+
     updateStatusBadge(formActive);
 
     try {
@@ -124,7 +137,10 @@ async function updateConfig() {
                 custom_slot_minutes: customSlot,
                 break_enabled: breakEnabled,
                 break_start: breakStart,
-                break_end: breakEnd
+                break_end: breakEnd,
+                original_price: originalPrice,
+                current_price: currentPrice,
+                currency: currency
             })
         });
         if (!res.ok) throw new Error('Failed to update config');
@@ -135,6 +151,9 @@ async function updateConfig() {
         adminConfig.break_enabled = breakEnabled;
         adminConfig.break_start = breakStart;
         adminConfig.break_end = breakEnd;
+        adminConfig.original_price = originalPrice;
+        adminConfig.current_price = currentPrice;
+        adminConfig.currency = currency;
     } catch(e) {
         showToast(e.message, true);
     }
@@ -152,6 +171,53 @@ async function updateBreakConfig(showSuccess = false) {
         showToast('Daily break settings saved!');
         renderAdminCalendar();
     }
+}
+
+function updatePricingPreview() {
+    const currency = document.getElementById('currency-select').value;
+    const originalPrice = parseInt(document.getElementById('original-price-input').value) || 0;
+    const currentPrice = parseInt(document.getElementById('current-price-input').value) || 0;
+
+    const originalEl = document.getElementById('price-preview-str');
+    const currentEl = document.getElementById('discount-preview-str');
+    const pctEl = document.getElementById('pct-preview-str');
+
+    if (originalPrice > 0) {
+        originalEl.style.display = 'inline';
+        originalEl.textContent = `${currency}${originalPrice}`;
+    } else {
+        originalEl.style.display = 'none';
+    }
+
+    if (currentPrice > 0) {
+        currentEl.textContent = `${currency}${currentPrice}`;
+    } else {
+        currentEl.textContent = 'Free';
+    }
+
+    if (originalPrice > currentPrice && originalPrice > 0) {
+        const pct = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
+        pctEl.textContent = `${pct}% Off`;
+        pctEl.style.display = 'inline-block';
+    } else {
+        pctEl.style.display = 'none';
+    }
+}
+
+async function savePricingConfig() {
+    const originalPrice = parseInt(document.getElementById('original-price-input').value);
+    const currentPrice = parseInt(document.getElementById('current-price-input').value);
+
+    if (isNaN(originalPrice) || originalPrice < 0) {
+        showToast('Please enter a valid original price.', true);
+        return;
+    }
+    if (isNaN(currentPrice) || currentPrice < 0) {
+        showToast('Please enter a valid current price.', true);
+        return;
+    }
+
+    await updateConfig();
 }
 
 // ================================================================
@@ -638,14 +704,14 @@ function renderAllBookingsTable(bookings) {
         ` : '<span style="color: var(--text-muted); font-size: 0.8rem;">No Link</span>';
 
         tr.innerHTML = `
-            <td style="font-weight:700;">${dateLabel}<br><span style="color:var(--text-muted);font-size:.82rem;">${formatTime12(b.booked_time)}</span></td>
-            <td>${b.client_name}</td>
-            <td>${b.client_email}</td>
-            <td>${b.client_phone || '—'}</td>
-            <td style="color: var(--text-secondary); font-size: 0.85rem;">${createdLabel}</td>
-            <td>${meetLinkHtml}</td>
-            <td><span class="status-pill ${b.status}">${b.status}</span></td>
-            <td>
+            <td data-label="Date & Time" style="font-weight:700;">${dateLabel}<br><span style="color:var(--text-muted);font-size:.82rem;">${formatTime12(b.booked_time)}</span></td>
+            <td data-label="Client">${b.client_name}</td>
+            <td data-label="Email">${b.client_email}</td>
+            <td data-label="Phone">${b.client_phone || '—'}</td>
+            <td data-label="Booked On" style="color: var(--text-secondary); font-size: 0.85rem;">${createdLabel}</td>
+            <td data-label="Meet Link">${meetLinkHtml}</td>
+            <td data-label="Status"><span class="status-pill ${b.status}">${b.status}</span></td>
+            <td data-label="Actions">
                 <div class="action-btns">
                     ${b.status !== 'completed' ? `<button class="action-btn success" onclick="updateBookingStatus(${b.id},'completed')">Done</button>` : ''}
                     ${b.status !== 'cancelled' ? `<button class="action-btn danger" onclick="updateBookingStatus(${b.id},'cancelled')">Cancel</button>` : ''}

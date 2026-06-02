@@ -768,3 +768,126 @@
         text-align: center;
     }
 }
+
+/* Smartphone Specific Optimization */
+@media (max-width: 480px) {
+    .app-container {
+        padding: 1rem 0.5rem !important;
+    }
+    .booking-info-panel {
+        padding: 1.2rem 1rem !important;
+        border-radius: 16px !important;
+    }
+    .booking-main {
+        padding: 1.2rem 1rem !important;
+        border-radius: 16px !important;
+    }
+    .cal-grid {
+        gap: 0.25rem !important;
+    }
+    .cal-day {
+        font-size: 0.85rem !important;
+        border-radius: 8px !important;
+    }
+    .slot-btn {
+        padding: 0.55rem 0.3rem !important;
+        font-size: 0.82rem !important;
+    }
+    .step-heading {
+        font-size: 1.15rem !important;
+        margin-bottom: 1rem !important;
+    }
+    .success-details-card {
+        padding: 1rem !important;
+        font-size: 0.82rem !important;
+    }
+}
+
+/* Card table reformatting for mobile viewports */
+@media (max-width: 768px) {
+    /* Hide the thead entirely */
+    table.leads-table thead {
+        display: none !important;
+    }
+    
+    /* Make table, tbody, tr, and td display block */
+    table.leads-table,
+    table.leads-table tbody,
+    table.leads-table tr,
+    table.leads-table td {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Style each tr as a card */
+    table.leads-table tbody tr {
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 16px !important;
+        margin-bottom: 1.2rem !important;
+        padding: 1.2rem !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.015) !important;
+        transition: transform 0.2s ease, border-color 0.2s ease !important;
+        position: relative !important;
+        cursor: pointer !important;
+    }
+    
+    table.leads-table tbody tr:hover {
+        transform: translateY(-2px) !important;
+        border-color: var(--primary) !important;
+    }
+    
+    /* Reformat td cells as key-value pairs using data-label attribute */
+    table.leads-table td {
+        border-bottom: 1px dashed rgba(0,0,0,0.04) !important;
+        padding: 0.6rem 0 !important;
+        min-height: 2.2rem !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        text-align: right !important;
+        font-size: 0.88rem !important;
+        white-space: normal !important;
+        max-width: 100% !important;
+        border-top: none !important;
+    }
+    
+    table.leads-table td:last-child {
+        border-bottom: none !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Inject the label from data-label before the content */
+    table.leads-table td::before {
+        content: attr(data-label) !important;
+        font-weight: 700 !important;
+        font-family: var(--font-heading) !important;
+        font-size: 0.78rem !important;
+        color: var(--text-secondary) !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.03em !important;
+        text-align: left !important;
+        padding-right: 1rem !important;
+        opacity: 0.85 !important;
+        display: inline-block !important;
+    }
+    
+    /* Make buttons full width on small layout */
+    .action-btns {
+        flex-direction: row !important;
+        gap: 0.4rem !important;
+        width: auto !important;
+        justify-content: flex-end !important;
+        display: flex !important;
+    }
+    
+    .action-btn {
+        width: auto !important;
+        padding: 0.35rem 0.8rem !important;
+        font-size: 0.75rem !important;
+        margin-bottom: 0 !important;
+    }
+}
+
+

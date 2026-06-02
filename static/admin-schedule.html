@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Growlouder  Console | Scheduling Manager</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="stylesheet" href="/static/css/schedule.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=1.2">
+    <link rel="stylesheet" href="/static/css/schedule.css?v=1.2">
 </head>
 <body>
 <div class="dashboard-container">
@@ -94,45 +94,56 @@
                     <span class="toggle-slider"></span>
                 </label>
             </div>
-            <div class="slot-duration-row" style="margin-top:1rem; gap:0.5rem;">
-                <div style="flex:1;">
-                    <label style="font-size:.75rem;color:var(--text-secondary);font-weight:600;display:block;margin-bottom:.2rem;">From</label>
-                    <input type="time" id="break-start-input" class="input-control" value="13:00">
+            <div class="slot-duration-row" style="margin-top: 1rem; gap: 0.5rem; display: flex; width: 100%;">
+                <div style="flex: 1; min-width: 0;">
+                    <label style="font-size: .75rem; color: var(--text-secondary); font-weight: 600; display: block; margin-bottom: .2rem;">From</label>
+                    <input type="time" id="break-start-input" class="input-control" style="padding: 0.55rem 0.75rem; font-size: 0.9rem; min-width: 0; width: 100%;" value="13:00">
                 </div>
-                <div style="flex:1;">
-                    <label style="font-size:.75rem;color:var(--text-secondary);font-weight:600;display:block;margin-bottom:.2rem;">To</label>
-                    <input type="time" id="break-end-input" class="input-control" value="14:00">
+                <div style="flex: 1; min-width: 0;">
+                    <label style="font-size: .75rem; color: var(--text-secondary); font-weight: 600; display: block; margin-bottom: .2rem;">To</label>
+                    <input type="time" id="break-end-input" class="input-control" style="padding: 0.55rem 0.75rem; font-size: 0.9rem; min-width: 0; width: 100%;" value="14:00">
                 </div>
             </div>
             <button class="btn" onclick="updateBreakConfig(true)" style="margin-top:1rem;padding:.7rem;font-size:.9rem;border-radius:10px;">Save Break Time</button>
         </div>
 
-        <!-- Google Developer Credentials -->
-        <div class="config-card" style="display: flex; flex-direction: column; justify-content: space-between;">
-            <div>
-                <div class="config-card-title">Google API Credentials</div>
-                <div class="config-card-sub">Paste credentials JSON or upload credentials.json file</div>
-                
-                <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.6rem;">
-                    <div style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4;">
-                        <strong>Active Client ID:</strong><br>
-                        <span id="active-client-id" style="font-family: monospace; word-break: break-all; color: var(--text-muted); font-size: 0.7rem;">Checking...</span>
-                    </div>
-                    
-                    <div style="border: 2px dashed var(--border-color); padding: 0.6rem 0.8rem; border-radius: 12px; text-align: center; cursor: pointer; position: relative; transition: border-color 0.2s;" id="cred-dropzone">
-                        <span style="font-size: 0.75rem; color: var(--text-secondary); pointer-events: none;" id="upload-label">Click or drop credentials.json here</span>
-                        <input type="file" id="cred-file-input" accept=".json" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" onchange="handleCredFileSelect(event)">
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; gap: 0.2rem;">
-                        <textarea id="cred-paste-input" class="input-control" rows="3" style="font-family: monospace; font-size: 0.75rem; resize: vertical; background: var(--bg-card); color: var(--text-primary); border-color: var(--border-color);" placeholder="Or paste credentials.json JSON here..." oninput="handleCredTextChange()"></textarea>
-                    </div>
+        <!-- Pricing Config Card -->
+        <div class="config-card">
+            <div class="config-card-header">
+                <div>
+                    <div class="config-card-title">Consultation Pricing</div>
+                    <div class="config-card-sub">Set original price, current price & currency</div>
                 </div>
             </div>
-            <button class="btn btn-secondary" id="save-creds-btn" onclick="saveGoogleCredentials()" style="margin-top: 0.8rem; padding: 0.6rem; font-size: 0.85rem; border-radius: 10px; box-shadow: none; border-color: var(--border-color); display: none;">
-                Update Credentials
-            </button>
+            <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.8rem;">
+                <div style="display: flex; gap: 0.5rem;">
+                    <div style="flex: 1.2;">
+                        <label style="font-size: .75rem; color: var(--text-secondary); font-weight: 600; display: block; margin-bottom: .2rem;">Currency</label>
+                        <select id="currency-select" class="input-control" style="padding: 0.5rem; font-size: 0.85rem;" oninput="updatePricingPreview()">
+                            <option value="₹">INR (₹)</option>
+
+                        </select>
+                    </div>
+                    <div style="flex: 2;">
+                        <label style="font-size: .75rem; color: var(--text-secondary); font-weight: 600; display: block; margin-bottom: .2rem;">Original Price</label>
+                        <input type="number" id="original-price-input" class="input-control" min="0" placeholder="e.g. 499" value="499" oninput="updatePricingPreview()">
+                    </div>
+                    <div style="flex: 2;">
+                        <label style="font-size: .75rem; color: var(--text-secondary); font-weight: 600; display: block; margin-bottom: .2rem;">Current Price</label>
+                        <input type="number" id="current-price-input" class="input-control" min="0" placeholder="e.g. 0" value="0" oninput="updatePricingPreview()">
+                    </div>
+                </div>
+                <div id="pricing-preview-badge" style="font-size: 0.75rem; font-weight: 600; color: #00b894; display: flex; align-items: center; gap: 0.4rem;">
+                    <span style="color: var(--text-secondary);">Preview:</span>
+                    <span id="price-preview-str" style="text-decoration: line-through; color: var(--text-muted);">₹499</span>
+                    <span id="discount-preview-str" style="color: #6c5ce7; font-weight: 700;">Free of charge</span>
+                    <span id="pct-preview-str" style="background: rgba(0, 184, 148, 0.12); color: #00b894; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.7rem; font-weight: 700; display: none;">100% Off</span>
+                </div>
+            </div>
+            <button class="btn" onclick="savePricingConfig()" style="margin-top: 1rem; padding: .7rem; font-size: .9rem; border-radius: 10px;">Save Pricing Settings</button>
         </div>
+
+
 
     </div>
 
@@ -339,6 +350,6 @@
     <div class="toast" id="toast-el"></div>
 </div>
 
-<script src="/static/js/admin-schedule.js"></script>
+<script src="/static/js/admin-schedule.js?v=1.2"></script>
 </body>
 </html>

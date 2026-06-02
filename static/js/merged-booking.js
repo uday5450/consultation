@@ -17,6 +17,7 @@ let formActive = true;
 
 // Collected business data from step 1
 let businessData = {};
+let consultationPrice = { original: 499, current: 0, currency: '₹' };
 
 async function init() {
     const now = new Date();
@@ -34,6 +35,36 @@ async function init() {
         const durationMap = {15:'15 minutes', 30:'30 minutes', 45:'45 minutes', 60:'1 hour', 90:'1.5 hours'};
         document.getElementById('slot-duration-label').textContent =
             durationMap[slotDurationMinutes] || `${slotDurationMinutes} minutes`;
+
+        // Update pricing details in the left panel
+        consultationPrice.currency = cfg.currency || '₹';
+        consultationPrice.original = cfg.original_price !== undefined ? cfg.original_price : 499;
+        consultationPrice.current = cfg.current_price !== undefined ? cfg.current_price : 0;
+
+        const originalLabel = document.getElementById('price-original-label');
+        const currentLabel = document.getElementById('price-current-label');
+        const percentLabel = document.getElementById('price-discount-percent');
+
+        if (consultationPrice.original > 0) {
+            originalLabel.textContent = `${consultationPrice.currency}${consultationPrice.original}`;
+            originalLabel.style.display = 'inline';
+        } else {
+            originalLabel.style.display = 'none';
+        }
+
+        if (consultationPrice.current > 0) {
+            currentLabel.textContent = `${consultationPrice.currency}${consultationPrice.current}`;
+        } else {
+            currentLabel.textContent = 'Free';
+        }
+
+        if (consultationPrice.original > consultationPrice.current && consultationPrice.original > 0) {
+            const pct = Math.round(((consultationPrice.original - consultationPrice.current) / consultationPrice.original) * 100);
+            percentLabel.textContent = `${pct}% Off`;
+            percentLabel.style.display = 'inline-block';
+        } else {
+            percentLabel.style.display = 'none';
+        }
     } catch(e) { console.error(e); }
 
     if (!formActive) {
@@ -265,13 +296,25 @@ function goToConfirmStep() {
     const [y, m, d] = selectedDate.split('-');
     const dateLabel = `${DAYS[new Date(+y,+m-1,+d).getDay()]}, ${MONTHS[+m-1]} ${+d}, ${y}`;
     
+    let priceText = '';
+    if (consultationPrice.original > consultationPrice.current && consultationPrice.original > 0) {
+        const pct = Math.round(((consultationPrice.original - consultationPrice.current) / consultationPrice.original) * 100);
+        const currentDisplay = consultationPrice.current > 0 ? `${consultationPrice.currency}${consultationPrice.current}` : 'Free';
+        const color = consultationPrice.current > 0 ? '#6c5ce7' : '#00b894';
+        priceText = `<span style="text-decoration:line-through;opacity:0.6;margin-right:0.3rem;">${consultationPrice.currency}${consultationPrice.original}</span> <span style="color:${color};font-weight:700;">${currentDisplay}</span> <span style="background:rgba(0,184,148,0.12);color:#00b894;padding:0.1rem 0.45rem;border-radius:4px;font-size:0.72rem;font-weight:700;margin-left:0.3rem;">${pct}% Off</span>`;
+    } else {
+        const currentDisplay = consultationPrice.current > 0 ? `${consultationPrice.currency}${consultationPrice.current}` : 'Free';
+        priceText = `<span style="font-weight:700;color:#6c5ce7;">${currentDisplay}</span>`;
+    }
+
     document.getElementById('confirm-details-card').innerHTML = `
         <strong>📅 Date:</strong> ${dateLabel}<br>
         <strong>⏰ Time:</strong> ${selectedTimeDisplay} IST<br>
         <strong>👤 Name:</strong> ${businessData.full_name}<br>
         <strong>📧 Email:</strong> ${businessData.email}<br>
         <strong>🏢 Business:</strong> ${businessData.business_name}<br>
-        <strong>📞 Phone:</strong> ${businessData.contact_number}
+        <strong>📞 Phone:</strong> ${businessData.contact_number}<br>
+        <strong>💵 Price:</strong> ${priceText}
     `;
 }
 
